@@ -13,38 +13,31 @@ export function Square({ value, handleClick }) {
 
 // ctrl + shift + j = browser console
 
-export default function Board() {
-
-  // next move
-  const [xIsNext, setXIsNext] = useState(true);
-  // stores elements in board grid
-  const [squares, setSquares] = useState(Array(9).fill(null));
-
+export function Board({squares, xIsNext, onPlay}) {
   let status;
   const winner = calculateWinner(squares);
   if(winner) {
-    status = "The winner is: " + winner;
+    status = "The winner is: " + winner; // winner determined
   }
   else {
-    status = "Next player: " + (xIsNext ? 'X': 'O');
+    status = "Next player: " + (xIsNext ? 'X': 'O'); // next turn
   }
 
   // update element on click
   const markSquare = (i) => {
-    // check if grid already has a move
+    // check if grid already has a move OR game is over (no more moves allows)
     if(squares[i] || winner) { //falsy - false, null, undefined, NaN, 0, '', ""
-      return
+      return;
     }
 
-    const nextSquares = squares.slice() //make (shallow) copy of squares from index 0
+    const nextSquares = squares.slice(); //make (shallow) copy of squares from index 0
     if (xIsNext) { 
-      nextSquares[i] = 'X'
+      nextSquares[i] = 'X';
     }
     else {
-      nextSquares[i] = 'O'
+      nextSquares[i] = 'O';
     }
-    setXIsNext(!xIsNext)
-    setSquares(nextSquares)
+    onPlay(nextSquares);
   }
 
   return (
@@ -89,4 +82,49 @@ function calculateWinner(squares) {
     }
   }
   return null;
+}
+
+export default function Game() {
+  const [history, setHistory] = useState([Array(9).fill(null)]); //nested array - array of past boards
+  const [currentMove, setCurrentMove] = useState(0);
+  const currentSquares = history[currentMove];
+  const xIsNext = currentMove % 2 === 0;
+
+  // updates history, next move, current move # when a square is clicked
+  const onPlay = (nextSquares) => {
+    setHistory([...history.slice(0, currentMove + 1), nextSquares]);
+    setCurrentMove(currentMove + 1);
+  }
+
+  // shows history moves that can be jumped back to
+  const historyDisplay = history.map((squares, move) => {
+    let display;
+    if(move > 0) {
+      display = "Go to move " + move;
+    }
+    else {
+      display = "Go to start";
+    }
+    return (
+      <li key={move}>
+        <button onClick={() => jumpTo(move)}>{display}</button>
+      </li>
+    )
+  });
+
+  // jumps to the move # passed as input
+  const jumpTo = (move) => {
+    setCurrentMove(move);
+  }
+
+  return (
+    <div className="game">
+      <div className="game-board">
+        <Board squares={currentSquares} xIsNext={xIsNext} onPlay={onPlay} />
+      </div>
+      <div className="game-info">
+        <ol>{historyDisplay}</ol>
+      </div>
+    </div>
+  )
 }
