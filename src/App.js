@@ -14,20 +14,42 @@ export function Square({ value, handleClick }) {
 // ctrl + shift + j = browser console
 
 export default function Board() {
-  // elements in board grid
+
+  // next move
+  const [xIsNext, setXIsNext] = useState(true);
+  // stores elements in board grid
   const [squares, setSquares] = useState(Array(9).fill(null));
 
+  let status;
+  const winner = calculateWinner(squares);
+  if(winner) {
+    status = "The winner is: " + winner;
+  }
+  else {
+    status = "Next player: " + (xIsNext ? 'X': 'O');
+  }
+
   // update element on click
-  const markSquare = (targetIndex) => {
-    // I know the tutorial says to use splice but I wanted to practice diff :D
-    const newSquares = squares.map((square, i) => (
-      i === targetIndex ? square = 'X' : square = square
-    ))
-    setSquares(newSquares)
+  const markSquare = (i) => {
+    // check if grid already has a move
+    if(squares[i] || winner) { //falsy - false, null, undefined, NaN, 0, '', ""
+      return
+    }
+
+    const nextSquares = squares.slice() //make (shallow) copy of squares from index 0
+    if (xIsNext) { 
+      nextSquares[i] = 'X'
+    }
+    else {
+      nextSquares[i] = 'O'
+    }
+    setXIsNext(!xIsNext)
+    setSquares(nextSquares)
   }
 
   return (
     <> 
+      <h1>{status}</h1>
       <div className="board-row">
         <Square value={squares[0]} handleClick={() => markSquare(0)}/>
         <Square value={squares[1]} handleClick={() => markSquare(1)}/>
@@ -45,4 +67,26 @@ export default function Board() {
       </div>
     </>
   );
+}
+
+// helper function to determine the current winner (if any)
+// returns: 'X', 'O', or null
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
 }
